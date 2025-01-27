@@ -1,0 +1,23 @@
+#include <Wire.h>
+
+const int nanoAddress = 8; // Alamat I2C dari Arduino Nano
+unsigned long lastRequestTime = 0;
+
+void setup() {
+  Wire.begin(); // Memulai komunikasi I2C
+  Serial.begin(9600);
+}
+
+void loop() {
+  unsigned long currentMillis = millis();
+  if (currentMillis - lastRequestTime >= 1000) {
+    lastRequestTime = currentMillis;
+    Wire.requestFrom(nanoAddress, sizeof(unsigned long));
+    if (Wire.available() == sizeof(unsigned long)) {
+      unsigned long countSeconds;
+      Wire.readBytes((char*)&countSeconds, sizeof(countSeconds));
+      Serial.print("Hourmeter: ");
+      Serial.println(countSeconds);
+    }
+  }
+}

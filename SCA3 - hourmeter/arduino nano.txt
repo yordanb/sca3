@@ -1,0 +1,55 @@
+#include <EEPROM.h>
+#include <Wire.h>
+
+const int eepromAddress = 0;
+unsigned long countSeconds = 0;
+
+const int pinD5 = 5;
+const int eepromAddress = 0;
+unsigned long previousMillis = 0;
+unsigned long countSeconds = 0;
+bool isCounting = false;
+
+void setup() {
+  pinMode(pinD5, INPUT);
+  Serial.begin(9600);
+  // Membaca nilai hourmeter terakhir dari EEPROM
+  EEPROM.get(eepromAddress, countSeconds);
+  Serial.print("Last count: ");
+  Serial.println(countSeconds);
+  Wire.begin(8); // Mengatur alamat I2C menjadi 8
+  Wire.onRequest(requestEvent); // Mendaftarkan fungsi permintaan
+  EEPROM.get(eepromAddress, countSeconds);
+}
+
+void requestEvent() {
+  EEPROM.get(eepromAddress, countSeconds);
+  Wire.write((const char*)&countSeconds, sizeof(countSeconds));
+}
+
+void loop() {
+  if (digitalRead(pinD5) == HIGH) {
+    if (!isCounting) {
+      isCounting = true;
+      previousMillis = millis();
+    } else {
+      unsigned long currentMillis = millis();
+      if (currentMillis - previousMillis >= 1000) {
+        countSeconds++;
+        previousMillis = currentMillis;
+      }
+    }
+  } else {
+    if (isCounting) {
+      isCounting = false;
+      // Menyimpan nilai hourmeter ke EEPROM
+      EEPROM.put(eepromAddress, countSeconds);
+      Serial.print("Saved count: ");
+      Serial.println(countSeconds);
+    }
+  }
+}
+
+
+
+
